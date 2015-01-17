@@ -170,7 +170,7 @@ public class BatteryController extends BroadcastReceiver {
         private boolean mRegistered;
 
         private final Uri STYLE_URI =
-                CMSettings.System.getUriFor(CMSettings.System.STATUS_BAR_BATTERY_STYLE);
+                CMSettings.System.getUriFor(CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE);
         private final Uri PERCENT_URI =
                 CMSettings.System.getUriFor(CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT);
 
@@ -197,7 +197,10 @@ public class BatteryController extends BroadcastReceiver {
 
         private void update() {
             mStyle = CMSettings.System.getIntForUser(mResolver,
-                    CMSettings.System.STATUS_BAR_BATTERY_STYLE, 0, mUserId);
+                    CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE, 0, mUserId);
+            if (mStyle == 1) {
+                mStyle = 5;
+            }
             mPercentMode = CMSettings.System.getIntForUser(mResolver,
                     CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT, 0, mUserId);
 

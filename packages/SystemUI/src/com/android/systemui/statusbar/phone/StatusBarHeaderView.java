@@ -155,6 +155,7 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
     private float mCurrentT;
     private boolean mShowingDetail;
     private boolean mDetailTransitioning;
+
     private SettingsObserver mSettingsObserver;
     private boolean mShowWeather;
     private boolean mShowBatteryTextExpanded;
@@ -404,6 +405,10 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
             updateSignalClusterDetachment();
         }
         mEmergencyCallsOnly.setVisibility(mExpanded && mShowEmergencyCallsOnly ? VISIBLE : GONE);
+        updateBatteryLevelVisibility();
+    }
+
+    private void updateBatteryLevelVisibility() {
         mBatteryLevel.setForceShown(mExpanded && mShowBatteryTextExpanded);
         mBatteryLevel.setVisibility(View.VISIBLE);
     }
@@ -997,11 +1002,15 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(CMSettings.System.getUriFor(
-                    CMSettings.System.STATUS_BAR_SHOW_WEATHER), false, this, UserHandle.USER_ALL);
+                    CMSettings.System.STATUS_BAR_SHOW_WEATHER),
+                    false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(CMSettings.System.getUriFor(
-                    CMSettings.System.STATUS_BAR_BATTERY_STYLE), false, this, UserHandle.USER_ALL);
+                    CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE),
+                    false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(CMSettings.System.getUriFor(
-                    CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT), false, this, UserHandle.USER_ALL);
+                    CMSettings.System.STATUS_BAR_BATTERY_STATUS_PERCENT_STYLE),
+                    false, this, UserHandle.USER_ALL);
+
             update();
         }
 
@@ -1015,28 +1024,59 @@ public class StatusBarHeaderView extends RelativeLayout implements View.OnClickL
 
         @Override
         public void update() {
-
-            ContentResolver resolver = mContext.getContentResolver();
-            int currentUserId = ActivityManager.getCurrentUser();
-            int batteryStyle = CMSettings.System.getIntForUser(resolver,
-                    CMSettings.System.STATUS_BAR_BATTERY_STYLE, 0, currentUserId);
-            boolean showExpandedBatteryPercentage = CMSettings.System.getIntForUser(resolver,
-                    CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT, 0, currentUserId) == 0;
-
-            switch (batteryStyle) {
-                case 4: //BATTERY_METER_GONE
-                case 6: //BATTERY_METER_TEXT
-                    showExpandedBatteryPercentage = false;
-                    break;
-                default:
-                    break;
-            }
-
-            mShowBatteryTextExpanded = showExpandedBatteryPercentage;
-            mShowWeather = CMSettings.System.getInt(
-                    resolver, CMSettings.System.STATUS_BAR_SHOW_WEATHER, 1) == 1;
-            updateVisibilities();
-            requestCaptureValues();
+            updateWithUri(null);
         }
+
+        public void updateWithUri(Uri uri) {
+             ContentResolver resolver = mContext.getContentResolver();
+             boolean updateAll = (uri == null);
+
+             if (updateAll ||
+                 uri.equals(CMSettings.System.getUriFor(
+                     CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE))
+                 || uri.equals(CMSettings.System.getUriFor(
+                     CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT))) {
+                 updateBatteryPercentageSettings();
+             }
+
+             int currentUserId = ActivityManager.getCurrentUser();
+             int batteryStyle = CMSettings.System.getIntForUser(resolver,
+                     CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE, 0, currentUserId);
+             boolean showExpandedBatteryPercentage = CMSettings.System.getIntForUser(resolver,
+                     CMSettings.System.STATUS_BAR_SHOW_BATTERY_PERCENT, 0, currentUserId) == 0;
+
+             switch (batteryStyle) {
+                 case 4: //BATTERY_METER_GONE
+                 case 6: //BATTERY_METER_TEXT
+                     showExpandedBatteryPercentage = false;
+                     break;
+                 default:
+                     break;
+             }
+             mShowBatteryTextExpanded = showExpandedBatteryPercentage;
+             updateVisibilities();
+             requestCaptureValues();
+             mShowWeather = CMSettings.System.getInt(
+                    resolver, CMSettings.System.STATUS_BAR_SHOW_WEATHER, 1) == 1;
+         }
+     }
+
+    private void updateBatteryPercentageSettings() {
+        ContentResolver resolver = mContext.getContentResolver();
+        int batteryStyle = CMSettings.System.getInt(resolver,
+                CMSettings.System.STATUS_BAR_BATTERY_STATUS_STYLE, 0);
+        boolean showExpandedBatteryPercentage = CMSettings.System.getInt(resolver,
+                CMSettings.System.STATUS_BAR_BATTERY_STATUS_PERCENT_STYLE, 2) == 2;
+
+        switch (batteryStyle) {
+            case 3: //BATTERY_METER_TEXT
+            case 4: //BATTERY_METER_GONE
+                showExpandedBatteryPercentage = false;
+                break;
+            default:
+                break;
+        }
+        mShowBatteryTextExpanded = showExpandedBatteryPercentage;
+        updateBatteryLevelVisibility();
     }
 }
