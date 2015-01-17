@@ -19,6 +19,7 @@ package com.android.internal.util.slim;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
@@ -75,4 +76,14 @@ public class ColorHelper {
         return bmpGrayscale;
     }
 
+    public static int getBlendColor(int from, int to, float ratio) {
+        final float inverseRatio = 1f - ratio;
+
+        final float a = Color.alpha(to) * ratio + Color.alpha(from) * inverseRatio;
+        final float r = Color.red(to) * ratio + Color.red(from) * inverseRatio;
+        final float g = Color.green(to) * ratio + Color.green(from) * inverseRatio;
+        final float b = Color.blue(to) * ratio + Color.blue(from) * inverseRatio;
+
+        return Color.argb((int) a, (int) r, (int) g, (int) b);
+    }
 }
