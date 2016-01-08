@@ -3646,6 +3646,12 @@ public final class Settings {
         public static final String SAFE_HEADSET_VOLUME = "safe_headset_volume";
 
         /**
+         * Whether to mute camera sound.
+         * @hide
+         */
+        public static final String PROP_CAMERA_SOUND = "persist.sys.camera-sound";
+
+        /**
          * Whether to mute annoying notifications
          * @hide
          */
